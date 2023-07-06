@@ -30,7 +30,7 @@ NB_EPOCHS = 10
 BATCH_SIZE = 2
 
 
-def encoded_examples_split(def_with_lemma, train="100_train.pkl", dev="100_dev.pkl", test="100_test.pkl",
+def encoded_examples_split(DEVICE, def_with_lemma, train="100_train.pkl", dev="100_dev.pkl", test="100_test.pkl",
                            id2def_sup="100_id2def_supersense.pkl", id2deflem_sup="100_id2defwithlemma_supersense.pkl"):
     # loads the structures necessary to build examples sets
     with open(train, "rb") as file:
@@ -58,7 +58,7 @@ def encoded_examples_split(def_with_lemma, train="100_train.pkl", dev="100_dev.p
     encoded_train_examples = []
     encoded_dev_examples = []
     encoded_test_examples = []
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME).to(DEVICE)
 
     for example in train_examples:
         definition = example[0]
@@ -97,10 +97,10 @@ def pad_batch(encodings_batch, padding_token_id=2, max_seq_length=100):
 
 class SupersenseTagger(nn.Module):
 
-    def __init__(self, params, bert_model_name=MODEL_NAME):
+    def __init__(self, params, DEVICE, bert_model_name=MODEL_NAME):
         super(SupersenseTagger, self).__init__()
         # definition of the bert model attribute
-        self.bert_model = AutoModel.from_pretrained(bert_model_name, output_attentions=True)
+        self.bert_model = AutoModel.from_pretrained(bert_model_name, output_attentions=True).to(DEVICE)
         # freezes the parameters of the bert embeddings if specified
         if params.frozen:
             for param in self.bert_model.parameters():
@@ -113,9 +113,9 @@ class SupersenseTagger(nn.Module):
         # size of the vocabulary over which the forward method of the MLP will give probabilities
         self.output_size = NB_CLASSES
         # definition of the parameters for the linear operation between the embedding layer and the hidden layer
-        self.linear_1 = nn.Linear(self.embedding_layer_size, self.hidden_layer_size)
+        self.linear_1 = nn.Linear(self.embedding_layer_size, self.hidden_layer_size).to(DEVICE)
         # definition of the parameters for the linear operation between the hidden layer and the output layer
-        self.linear_2 = nn.Linear(self.hidden_layer_size, self.output_size)
+        self.linear_2 = nn.Linear(self.hidden_layer_size, self.output_size).to(DEVICE)
 
     def forward(self, padded_encodings): #@@ prendre en entrée un tenseur de taille batch_size, max_seq_length_for_this_batch
 
@@ -142,11 +142,11 @@ class SupersenseTagger(nn.Module):
             predicted_indices = torch.argmax(log_probs, dim=1).tolist()
         return [SUPERSENSES[i] for i in predicted_indices]
 
-    def evaluate(self, examples_batch_encodings):
+    def evaluate(self, examples_batch_encodings, DEVICE):
         with torch.no_grad():
             X, Y = zip(*examples_batch_encodings)
-            X = pad_batch(X, padding_token_id=PADDING_TOKEN_ID)
-            Y_gold = torch.tensor(Y)
+            X = pad_batch(X, padding_token_id=PADDING_TOKEN_ID).to(DEVICE)
+            Y_gold = torch.tensor(Y).to(DEVICE)
             Y_pred = torch.argmax(self.forward(X), dim=1)
 
         # Find the indices where predictions and gold classes differ
@@ -158,7 +158,7 @@ class SupersenseTagger(nn.Module):
         return errors, torch.sum((Y_pred == Y_gold).int()).item()
 
 
-def training(parameters, train_examples, dev_examples, classifier):
+def training(parameters, train_examples, dev_examples, classifier, DEVICE):
     print("TRAINING")
     # get every parameter in a local variable
     for param in parameters.keys:
@@ -199,8 +199,8 @@ def training(parameters, train_examples, dev_examples, classifier):
 
             X_train, Y_train = zip(*train_batch)
 
-            padded_encodings = pad_batch(X_train, padding_token_id=PADDING_TOKEN_ID)
-            Y_train = torch.tensor(Y_train, dtype=torch.long)
+            padded_encodings = pad_batch(X_train, padding_token_id=PADDING_TOKEN_ID).to(DEVICE)
+            Y_train = torch.tensor(Y_train, dtype=torch.long).to(DEVICE)
 
             my_supersense_tagger.zero_grad()
             log_probs = my_supersense_tagger(padded_encodings)
@@ -222,8 +222,8 @@ def training(parameters, train_examples, dev_examples, classifier):
             dev_batch = dev_examples[j: j + locals()["batch_size"]]
             j += locals()["batch_size"]
             X_dev, Y_dev = zip(*dev_batch)
-            dev_padded_encodings = pad_batch(X_dev, padding_token_id=PADDING_TOKEN_ID)
-            Y_dev = torch.tensor(Y_dev, dtype=torch.long)
+            dev_padded_encodings = pad_batch(X_dev, padding_token_id=PADDING_TOKEN_ID).to(DEVICE)
+            Y_dev = torch.tensor(Y_dev, dtype=torch.long).to(DEVICE)
             dev_log_probs = my_supersense_tagger(dev_padded_encodings)
 
             predicted_indices = torch.argmax(dev_log_probs, dim=1)
@@ -282,7 +282,7 @@ def evaluation(examples, classifier):
     print(f"Erreurs les plus courantes: {most_common_errors}")
 
 
-def inference(inference_data_set, classifier):
+def inference(inference_data_set, classifier, DEVICE):
     pass
 
 
