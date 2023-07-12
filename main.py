@@ -68,7 +68,7 @@ if __name__ == '__main__':
                                                                              id2deflem_sup=args.id2deflem_sup_file)
     # Classification program
     if args.classifier_mode == 'test':
-        with open("logs.txt", 'r', encoding="utf-8") as file:
+        with open("logs.txt", 'w', encoding="utf-8") as file:
             test_params = TEST_PARAMETERS
             classifier = clf.SupersenseTagger(test_params, DEVICE)
             clf.training(test_params, train_examples, dev_examples, classifier, DEVICE, file)
