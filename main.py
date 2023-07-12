@@ -15,7 +15,7 @@ SUPERSENSES = ['act', 'animal', 'artifact', 'attribute', 'body', 'cognition',
 
 
 class Parameters:
-    def __init__(self, nb_epochs=100, batch_size=50, hidden_layer_size=300, patience=5, lr=0.00025, frozen=True, max_seq_length=50):
+    def __init__(self, nb_epochs=10, batch_size=50, hidden_layer_size=300, patience=5, lr=0.00025, frozen=True, max_seq_length=50):
         self.nb_epochs = nb_epochs
         self.batch_size = batch_size
         self.hidden_layer_size = hidden_layer_size
@@ -68,17 +68,19 @@ if __name__ == '__main__':
                                                                              id2deflem_sup=args.id2deflem_sup_file)
     # Classification program
     if args.classifier_mode == 'test':
-        test_params = TEST_PARAMETERS
-        classifier = clf.SupersenseTagger(test_params, DEVICE)
-        clf.training(test_params, train_examples, dev_examples, classifier, DEVICE)
-        clf.evaluation(test_examples, classifier)
-
+        with open("logs.txt", 'r', encoding="utf-8") as file:
+            test_params = TEST_PARAMETERS
+            classifier = clf.SupersenseTagger(test_params, DEVICE)
+            clf.training(test_params, train_examples, dev_examples, classifier, DEVICE, file)
+            clf.evaluation(test_examples, classifier, file)
+"""
     elif args.classifier_mode == 'combinations':
         parameter_combinations = PARAMETER_COMBINATIONS
         for params in parameter_combinations:
             classifier = clf.SupersenseTagger(params, DEVICE)
             clf.training(params, train_examples, dev_examples, classifier, DEVICE)
-            clf.evaluation(test_examples, classifier)
+            clf.evaluation(train_examples, classifier)
+            clf.evaluation(dev_examples, classifier)
 
     elif args.classifier_mode == 'dump':
         params = BEST_PARAMETERS
@@ -101,4 +103,4 @@ if __name__ == '__main__':
         classifier.load_state_dict(torch.load('mlp_model_state_dict.pt'))
         classifier.eval()
         clf.inference(inference_data_set, classifier, DEVICE)
-
+"""

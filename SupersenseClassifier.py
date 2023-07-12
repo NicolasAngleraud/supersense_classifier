@@ -158,12 +158,14 @@ class SupersenseTagger(nn.Module):
         return errors, torch.sum((Y_pred == Y_gold).int()).item()
 
 
-def training(parameters, train_examples, dev_examples, classifier, DEVICE):
-    print("TRAINING")
+def training(parameters, train_examples, dev_examples, classifier, DEVICE, file):
+    # print("TRAINING")
+    file.write("TRAINING\n")
     # get every parameter in a local variable
     for param in parameters.keys:
         locals()[param] = getattr(parameters, param)
-        print(param, locals()[param])
+        # print(param, locals()[param])
+        file.write(f"{param}: {locals()[param]}\n")
 
     # instance of NSupersenseTagger
     my_supersense_tagger = classifier
@@ -180,7 +182,7 @@ def training(parameters, train_examples, dev_examples, classifier, DEVICE):
     optimizer = optim.Adam(my_supersense_tagger.parameters(), lr=locals()["lr"])
 
     for epoch in range(locals()["nb_epochs"]):
-        print("EPOCH: ", epoch)
+        # print("EPOCH: ", epoch)
         epoch_loss = 0
         dev_epoch_loss = 0
 
@@ -238,13 +240,18 @@ def training(parameters, train_examples, dev_examples, classifier, DEVICE):
         # Early stopping
         if epoch > locals()["patience"]:
             if all(dev_losses[i] > dev_losses[i - 1] for i in range(-1, -locals()["patience"], -1)):
-                print(f"EARLY STOPPING: EPOCH = {epoch}")
+                # print(f"EARLY STOPPING: EPOCH = {epoch}")
+                file.write(f"EARLY STOPPING: EPOCH = {epoch}\n")
                 break
 
-    print(f"Train losses = {[round(train_loss, 2) for train_loss in train_losses]}")
-    print(f"Dev losses = {[round(dev_loss, 2) for dev_loss in dev_losses]}")
-    print(f"Train accuracies = {[round(train_accuracy, 2) for train_accuracy in train_accuracies]}")
-    print(f"Dev accuracies = {[round(dev_accuracy, 2) for dev_accuracy in dev_accuracies]}")
+    # print(f"Train losses = {[round(train_loss, 2) for train_loss in train_losses]}")
+    file.write(f"Train losses = {[round(train_loss, 2) for train_loss in train_losses]}\n")
+    # print(f"Dev losses = {[round(dev_loss, 2) for dev_loss in dev_losses]}")
+    file.write(f"Dev losses = {[round(dev_loss, 2) for dev_loss in dev_losses]}\n")
+    # print(f"Train accuracies = {[round(train_accuracy, 2) for train_accuracy in train_accuracies]}")
+    file.write(f"Train accuracies = {[round(train_accuracy, 2) for train_accuracy in train_accuracies]}\n")
+    # print(f"Dev accuracies = {[round(dev_accuracy, 2) for dev_accuracy in dev_accuracies]}")
+    file.write(f"Dev accuracies = {[round(dev_accuracy, 2) for dev_accuracy in dev_accuracies]}\n")
 
     abs = np.arange(len(train_losses))
     plt.plot(abs, train_losses, label='train loss')
@@ -252,7 +259,9 @@ def training(parameters, train_examples, dev_examples, classifier, DEVICE):
     plt.xlabel('epoch')
     plt.ylabel('loss')
     plt.legend()
-    plt.show()
+    # plt.show()
+    plt.savefig(f"train_losses.png")
+    plt.close()
 
     abs = np.arange(len(train_accuracies))
     plt.plot(abs, train_accuracies, label='train accuracy')
@@ -260,10 +269,12 @@ def training(parameters, train_examples, dev_examples, classifier, DEVICE):
     plt.xlabel('epoch')
     plt.ylabel('accuracy')
     plt.legend()
-    plt.show()
+    # plt.show()
+    plt.savefig(f"train_accuracies.png")
+    plt.close()
 
 
-def evaluation(examples, classifier):
+def evaluation(examples, classifier, file):
     batch_size = 100
     i = 0
     nb_good_preds = 0
@@ -275,11 +286,13 @@ def evaluation(examples, classifier):
         errors_list += partial_errors_list
         nb_good_preds += partial_nb_good_preds
 
-    print(f"ACCURACY test set = {nb_good_preds/len(examples)}")
+    # print(f"ACCURACY test set = {nb_good_preds/len(examples)}")
+    file.write(f"ACCURACY test set = {nb_good_preds/len(examples)}\n")
 
     counter = Counter(errors_list)
     most_common_errors = counter.most_common(10)
-    print(f"Erreurs les plus courantes: {most_common_errors}")
+    # print(f"Erreurs les plus courantes: {most_common_errors}")
+    file.write(f"Erreurs les plus courantes: {most_common_errors}\n")
 
 
 def inference(inference_data_set, classifier, DEVICE):
@@ -296,5 +309,10 @@ class MostFrequentSequoia(Baseline):
 
 
 class MostFrequentWiktionary(Baseline):
+    def __init__(self):
+        pass
+
+
+class MostFrequentTrainingData(Baseline):
     def __init__(self):
         pass
