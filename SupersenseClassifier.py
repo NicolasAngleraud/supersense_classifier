@@ -58,7 +58,7 @@ def encoded_examples_split(DEVICE, def_with_lemma, train="100_train.pkl", dev="1
     encoded_train_examples = []
     encoded_dev_examples = []
     encoded_test_examples = []
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME).to(DEVICE)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
     for example in train_examples:
         definition = example[0]
