@@ -150,7 +150,7 @@ class SupersenseTagger(nn.Module):
             Y_pred = torch.argmax(self.forward(X), dim=1)
 
         # Find the indices where predictions and gold classes differ
-        error_indices = torch.nonzero(Y_pred != Y_gold).squeeze()
+        error_indices = torch.nonzero(Y_pred != Y_gold).squeeze().to(DEVICE)
 
         # Get the predicted and gold classes for the errors
         errors = [(SUPERSENSES[Y_pred[i].item()], SUPERSENSES[Y_gold[i].item()]) for i in error_indices]
