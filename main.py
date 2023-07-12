@@ -15,7 +15,7 @@ SUPERSENSES = ['act', 'animal', 'artifact', 'attribute', 'body', 'cognition',
 
 
 class Parameters:
-    def __init__(self, nb_epochs=100, batch_size=25, hidden_layer_size=300, patience=5, lr=0.00025, frozen=True, max_seq_length=50):
+    def __init__(self, nb_epochs=100, batch_size=25, hidden_layer_size=300, patience=5, lr=0.00025, frozen=False, max_seq_length=50):
         self.nb_epochs = nb_epochs
         self.batch_size = batch_size
         self.hidden_layer_size = hidden_layer_size
