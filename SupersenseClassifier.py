@@ -274,15 +274,15 @@ def training(parameters, train_examples, dev_examples, classifier, DEVICE, file)
     plt.close()
 
 
-def evaluation(examples, classifier, file):
-    batch_size = 100
+def evaluation(examples, classifier, DEVICE, file):
+    batch_size =25
     i = 0
     nb_good_preds = 0
     errors_list = []
     while i < len(examples):
         evaluation_batch = examples[i: i + batch_size]
         i += batch_size
-        partial_errors_list, partial_nb_good_preds = classifier.evaluate(evaluation_batch)
+        partial_errors_list, partial_nb_good_preds = classifier.evaluate(evaluation_batch, DEVICE)
         errors_list += partial_errors_list
         nb_good_preds += partial_nb_good_preds
 

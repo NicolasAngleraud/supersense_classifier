@@ -72,7 +72,7 @@ if __name__ == '__main__':
             test_params = TEST_PARAMETERS
             classifier = clf.SupersenseTagger(test_params, DEVICE)
             clf.training(test_params, train_examples, dev_examples, classifier, DEVICE, file)
-            clf.evaluation(test_examples, classifier, file)
+            clf.evaluation(test_examples, classifier, DEVICE, file)
 """
     elif args.classifier_mode == 'combinations':
         parameter_combinations = PARAMETER_COMBINATIONS
