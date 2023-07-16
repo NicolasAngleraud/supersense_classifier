@@ -30,8 +30,8 @@ NB_EPOCHS = 10
 BATCH_SIZE = 2
 
 
-def encoded_examples_split(DEVICE, def_with_lemma, train="100_train.pkl", dev="100_dev.pkl", test="100_test.pkl",
-                           id2def_sup="100_id2def_supersense.pkl", id2deflem_sup="100_id2defwithlemma_supersense.pkl"):
+def encoded_examples_split(DEVICE, def_mode='definition', train="1_train.pkl", dev="1_dev.pkl", test="1_test.pkl",
+                           id2data="1_id2data.pkl"):
     # loads the structures necessary to build examples sets
     with open(train, "rb") as file:
         train_ids = pickle.load(file)
@@ -39,20 +39,14 @@ def encoded_examples_split(DEVICE, def_with_lemma, train="100_train.pkl", dev="1
         dev_ids = pickle.load(file)
     with open(test, "rb") as file:
         test_ids = pickle.load(file)
-    with open(id2def_sup, "rb") as file:
-        id2def_supersense = pickle.load(file)
-    with open(id2deflem_sup, "rb") as file:
-        id2defwithlemma_supersense = pickle.load(file)
+    with open(id2data, "rb") as file:
+        id2data_dict = pickle.load(file)
+
 
     # build examples sets
-    if not def_with_lemma:
-        train_examples = [id2def_supersense[id] for id in train_ids]
-        dev_examples = [id2def_supersense[id] for id in dev_ids]
-        test_examples = [id2def_supersense[id] for id in test_ids]
-    else:
-        train_examples = [id2defwithlemma_supersense[id] for id in train_ids]
-        dev_examples = [id2defwithlemma_supersense[id] for id in dev_ids]
-        test_examples = [id2defwithlemma_supersense[id] for id in test_ids]
+    train_examples = [id2data_dict[id] for id in train_ids]
+    dev_examples = [id2data_dict[id] for id in dev_ids]
+    test_examples = [id2data_dict[id] for id in test_ids]
 
     # encodes the examples of each set
     encoded_train_examples = []
@@ -61,20 +55,20 @@ def encoded_examples_split(DEVICE, def_with_lemma, train="100_train.pkl", dev="1
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
     for example in train_examples:
-        definition = example[0]
-        supersense = example[1]
+        definition = example[def_mode][0]
+        supersense = example[def_mode][1]
         definition_encoding = tokenizer.encode(text=definition, add_special_tokens=True)
         supersense_encoding = supersense2i[supersense]
         encoded_train_examples.append((definition_encoding, supersense_encoding))
     for example in dev_examples:
-        definition = example[0]
-        supersense = example[1]
+        definition = example[def_mode][0]
+        supersense = example[def_mode][1]
         definition_encoding = tokenizer.encode(text=definition, add_special_tokens=True)
         supersense_encoding = supersense2i[supersense]
         encoded_dev_examples.append((definition_encoding, supersense_encoding))
     for example in test_examples:
-        definition = example[0]
-        supersense = example[1]
+        definition = example[def_mode][0]
+        supersense = example[def_mode][1]
         definition_encoding = tokenizer.encode(text=definition, add_special_tokens=True)
         supersense_encoding = supersense2i[supersense]
         encoded_test_examples.append((definition_encoding, supersense_encoding))
@@ -159,13 +153,11 @@ class SupersenseTagger(nn.Module):
 
 
 def training(parameters, train_examples, dev_examples, classifier, DEVICE, file):
-    # print("TRAINING")
-    file.write("TRAINING\n")
     # get every parameter in a local variable
     for param in parameters.keys:
         locals()[param] = getattr(parameters, param)
         # print(param, locals()[param])
-        file.write(f"{param}: {locals()[param]}\n")
+        file.write(f"{param}:{locals()[param]};")
 
     # instance of NSupersenseTagger
     my_supersense_tagger = classifier
@@ -241,18 +233,19 @@ def training(parameters, train_examples, dev_examples, classifier, DEVICE, file)
         if epoch > locals()["patience"]:
             if all(dev_losses[i] > dev_losses[i - 1] for i in range(-1, -locals()["patience"], -1)):
                 # print(f"EARLY STOPPING: EPOCH = {epoch}")
-                file.write(f"EARLY STOPPING: EPOCH = {epoch}\n")
+                file.write(f"EARLY STOPPING:EPOCH = {epoch};")
                 break
 
     # print(f"Train losses = {[round(train_loss, 2) for train_loss in train_losses]}")
-    file.write(f"Train losses = {[round(train_loss, 2) for train_loss in train_losses]}\n")
+    file.write(f"Train losses:{[round(train_loss, 2) for train_loss in train_losses]};")
     # print(f"Dev losses = {[round(dev_loss, 2) for dev_loss in dev_losses]}")
-    file.write(f"Dev losses = {[round(dev_loss, 2) for dev_loss in dev_losses]}\n")
+    file.write(f"Dev losses:{[round(dev_loss, 2) for dev_loss in dev_losses]};")
     # print(f"Train accuracies = {[round(train_accuracy, 2) for train_accuracy in train_accuracies]}")
-    file.write(f"Train accuracies = {[round(train_accuracy, 2) for train_accuracy in train_accuracies]}\n")
+    file.write(f"Train accuracies:{[round(train_accuracy, 2) for train_accuracy in train_accuracies]};")
     # print(f"Dev accuracies = {[round(dev_accuracy, 2) for dev_accuracy in dev_accuracies]}")
-    file.write(f"Dev accuracies = {[round(dev_accuracy, 2) for dev_accuracy in dev_accuracies]}\n")
+    file.write(f"Dev accuracies:{[round(dev_accuracy, 2) for dev_accuracy in dev_accuracies]};")
 
+    """
     abs = np.arange(len(train_losses))
     plt.plot(abs, train_losses, label='train loss')
     plt.plot(abs, dev_losses, label='dev loss')
@@ -272,6 +265,7 @@ def training(parameters, train_examples, dev_examples, classifier, DEVICE, file)
     # plt.show()
     plt.savefig(f"train_accuracies.png")
     plt.close()
+    """
 
 
 def evaluation(examples, classifier, DEVICE, file):
@@ -287,12 +281,12 @@ def evaluation(examples, classifier, DEVICE, file):
         nb_good_preds += partial_nb_good_preds
 
     # print(f"ACCURACY test set = {nb_good_preds/len(examples)}")
-    file.write(f"ACCURACY test set = {nb_good_preds/len(examples)}\n")
+    file.write(f"ACCURACY:{nb_good_preds/len(examples)};")
 
     counter = Counter(errors_list)
     most_common_errors = counter.most_common(10)
     # print(f"Erreurs les plus courantes: {most_common_errors}")
-    file.write(f"Erreurs les plus courantes: {most_common_errors}\n")
+    file.write(f"ERRORS:{most_common_errors};")
 
 
 def inference(inference_data_set, classifier, DEVICE):
@@ -300,19 +294,42 @@ def inference(inference_data_set, classifier, DEVICE):
 
 
 class Baseline:
-    pass
+    def training(self):
+        pass
+
+    def evaluation(self):
+        pass
 
 
 class MostFrequentSequoia(Baseline):
-    def __init__(self):
+    def __init__(self, sequoia_file):
+        self.file = sequoia_file
+
+    def training(self):
+        pass
+
+    def evaluation(self):
         pass
 
 
 class MostFrequentWiktionary(Baseline):
-    def __init__(self):
+    def __init__(self, wiki_file):
+        self.file = wiki_file
+
+    def training(self):
+        pass
+
+    def evaluation(self):
         pass
 
 
 class MostFrequentTrainingData(Baseline):
-    def __init__(self):
+    def __init__(self, train_ids, id2data_file):
+        self.train_ids = train_ids
+        self.id2data = id2data_file
+
+    def training(self):
+        pass
+
+    def evaluation(self):
         pass
