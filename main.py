@@ -53,7 +53,7 @@ if __name__ == '__main__':
                     for patience in [5]:
                         # Encoding the examples from the datasets
                         train_examples, dev_examples, test_examples = clf.encoded_examples_split(DEVICE,
-                                                                                                 definition_mode=def_mode,
+                                                                                                 def_mode=def_mode,
                                                                                                  train=f"{split_id}_train.pkl",
                                                                                                  dev=f"{split_id}_dev.pkl",
                                                                                                  test=f"{split_id}_test.pkl",
