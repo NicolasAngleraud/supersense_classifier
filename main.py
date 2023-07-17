@@ -15,7 +15,7 @@ SUPERSENSES = ['act', 'animal', 'artifact', 'attribute', 'body', 'cognition',
 
 
 class Parameters:
-    def __init__(self, nb_epochs=500, batch_size=25, hidden_layer_size=300, patience=5, lr=0.00025, frozen=True, max_seq_length=50, window_example=10, definition_mode='definition'):
+    def __init__(self, nb_epochs=200, batch_size=25, hidden_layer_size=300, patience=5, lr=0.00025, frozen=True, max_seq_length=50, window_example=10, definition_mode='definition'):
         self.nb_epochs = nb_epochs
         self.batch_size = batch_size
         self.hidden_layer_size = hidden_layer_size
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         for split_id in range(1, 2):
             for def_mode in ['definition_with_lemma_and_labels']:
                 for lr in [0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001, 0.000005, 0.000001, 0.0000005, 0.0000001, 0.00000005, 0.00000001]:
-                    for patience in [10]:
+                    for patience in [7]:
                         # Encoding the examples from the datasets
                         train_examples, dev_examples, test_examples = clf.encoded_examples_split(DEVICE,
                                                                                                  def_mode=def_mode,
