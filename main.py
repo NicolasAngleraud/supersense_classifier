@@ -49,7 +49,7 @@ if __name__ == '__main__':
         for split_id in range(1, 2):
             for def_mode in ['definition_with_lemma_and_labels']:
                 for lr in [0.00001, 0.000001, 0.0000001]:
-                    for patience in [10, 15]:
+                    for patience in [10]:
                         # Encoding the examples from the datasets
                         train_examples, dev_examples, test_examples = clf.encoded_examples_split(DEVICE,
                                                                                                  def_mode=def_mode,
