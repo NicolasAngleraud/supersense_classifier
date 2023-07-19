@@ -295,7 +295,8 @@ def evaluation(examples, classifier, DEVICE, file, supersense_dist, supersense_c
     most_common_errors = counter.most_common(10)
     # print(f"Erreurs les plus courantes: {most_common_errors}")
     file.write(f"ERRORS:{most_common_errors};")
-    file.write(f"Accuracy per supersense: {supersense} : {supersense_correct[supersense]/supersense_dist[supersense]}" for supersense in supersense_dist)
+    for supersense in supersense_dist:
+        file.write(f"Accuracy for {supersense}:{supersense_correct[supersense]/supersense_dist[supersense]}")
 
 
 def inference(inference_data_set, classifier, DEVICE):
