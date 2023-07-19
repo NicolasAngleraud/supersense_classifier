@@ -44,7 +44,7 @@ def encoded_examples_split(DEVICE, def_mode='definition', train="1_train.pkl", d
 
 
     # build examples sets
-    train_examples = np.shuffle([id2data_dict[id] for id in train_ids])
+    train_examples = [id2data_dict[id] for id in train_ids]
     dev_examples = [id2data_dict[id] for id in dev_ids]
     test_examples = [id2data_dict[id] for id in test_ids]
 
