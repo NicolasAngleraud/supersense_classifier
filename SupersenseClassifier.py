@@ -44,7 +44,7 @@ def encoded_examples_split(DEVICE, def_mode='definition', train="1_train.pkl", d
 
 
     # build examples sets
-    train_examples = [id2data_dict[id] for id in train_ids]
+    train_examples = np.shuffle([id2data_dict[id] for id in train_ids])
     dev_examples = [id2data_dict[id] for id in dev_ids]
     test_examples = [id2data_dict[id] for id in test_ids]
 
@@ -136,7 +136,7 @@ class SupersenseTagger(nn.Module):
             predicted_indices = torch.argmax(log_probs, dim=1).tolist()
         return [SUPERSENSES[i] for i in predicted_indices]
 
-    def evaluate(self, examples_batch_encodings, DEVICE):
+    def evaluate(self, examples_batch_encodings, DEVICE, supersense_dist, supersense_correct):
         with torch.no_grad():
             X, Y = zip(*examples_batch_encodings)
             X = pad_batch(X, padding_token_id=PADDING_TOKEN_ID).to(DEVICE)
@@ -146,8 +146,16 @@ class SupersenseTagger(nn.Module):
         # Find the indices where predictions and gold classes differ
         error_indices = torch.nonzero(Y_pred != Y_gold).squeeze().to(DEVICE)
 
+        correct_indices = torch.nonzero(Y_pred != Y_gold).squeeze().to(DEVICE)
+
         # Get the predicted and gold classes for the errors
         errors = [(SUPERSENSES[Y_pred[i].item()], SUPERSENSES[Y_gold[i].item()]) for i in error_indices]
+
+        for i in correct_indices:
+            supersense_correct[SUPERSENSES[Y_gold[i].item()]] += 1
+
+        for j in range(len(examples_batch_encodings)):
+            supersense_dist[SUPERSENSES[Y_gold[j].item()]] += 1
 
         return errors, torch.sum((Y_pred == Y_gold).int()).item()
 
@@ -268,7 +276,7 @@ def training(parameters, train_examples, dev_examples, classifier, DEVICE, file)
     """
 
 
-def evaluation(examples, classifier, DEVICE, file):
+def evaluation(examples, classifier, DEVICE, file, supersense_dist, supersense_correct):
     batch_size =25
     i = 0
     nb_good_preds = 0
@@ -276,7 +284,7 @@ def evaluation(examples, classifier, DEVICE, file):
     while i < len(examples):
         evaluation_batch = examples[i: i + batch_size]
         i += batch_size
-        partial_errors_list, partial_nb_good_preds = classifier.evaluate(evaluation_batch, DEVICE)
+        partial_errors_list, partial_nb_good_preds = classifier.evaluate(evaluation_batch, DEVICE, supersense_dist, supersense_correct)
         errors_list += partial_errors_list
         nb_good_preds += partial_nb_good_preds
 
@@ -287,6 +295,7 @@ def evaluation(examples, classifier, DEVICE, file):
     most_common_errors = counter.most_common(10)
     # print(f"Erreurs les plus courantes: {most_common_errors}")
     file.write(f"ERRORS:{most_common_errors};")
+    file.write(f"Accuracy per supersense: {supersense} : {supersense_correct[supersense]/supersense_dist[supersense]}" for supersense in supersense_dist)
 
 
 def inference(inference_data_set, classifier, DEVICE):

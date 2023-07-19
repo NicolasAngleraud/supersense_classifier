@@ -44,12 +44,15 @@ if __name__ == '__main__':
     if torch.cuda.is_available():
         DEVICE = torch.device("cuda:" + args.device_id)
 
+    supersense_dist = {supersense : 0 for supersense in SUPERSENSES}
+    supersense_correct = {supersense : 0 for supersense in SUPERSENSES}
+
     # Classification program
-    with open("logs_4.txt", 'w', encoding="utf-8") as file:
+    with open("logs_5.txt", 'w', encoding="utf-8") as file:
         for split_id in range(1, 2):
             for def_mode in ['definition_with_lemma_and_labels']:
-                for lr in [0.00001]:
-                    for patience in [10]:
+                for lr in [0.0005]:
+                    for patience in [5]:
                         # Encoding the examples from the datasets
                         train_examples, dev_examples, test_examples = clf.encoded_examples_split(DEVICE,
                                                                                                  def_mode=def_mode,
@@ -63,5 +66,5 @@ if __name__ == '__main__':
                         file.write(f"split_id:{split_id};")
                         classifier = clf.SupersenseTagger(params, DEVICE)
                         clf.training(params, train_examples, dev_examples, classifier, DEVICE, file)
-                        clf.evaluation(dev_examples, classifier, DEVICE, file)
+                        clf.evaluation(dev_examples, classifier, DEVICE, file, supersense_dist, supersense_correct)
                         file.write("\n")
