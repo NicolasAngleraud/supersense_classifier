@@ -288,7 +288,10 @@ def evaluation(examples, classifier, DEVICE, file, supersense_dist, supersense_c
     # print(f"Erreurs les plus courantes: {most_common_errors}")
     file.write(f"ERRORS:{most_common_errors};")
     for supersense in supersense_dist:
-        file.write(f"Accuracy for {supersense}:{supersense_correct[supersense]/supersense_dist[supersense]};")
+        if not supersense_dist[supersense] == 0:
+            file.write(f"Accuracy for {supersense}:{supersense_correct[supersense]/supersense_dist[supersense]};")
+        else:
+            file.write(f"No supersense {supersense};")
 
 
 def inference(inference_data_set, classifier, DEVICE):
