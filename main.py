@@ -15,7 +15,7 @@ SUPERSENSES = ['act', 'animal', 'artifact', 'attribute', 'body', 'cognition',
 
 
 class Parameters:
-    def __init__(self, nb_epochs=100, batch_size=25, hidden_layer_size=300, patience=15, lr=0.00025, frozen=True, max_seq_length=50, window_example=10, definition_mode='definition'):
+    def __init__(self, nb_epochs=100, batch_size=25, hidden_layer_size=300, patience=5, lr=0.00025, frozen=True, max_seq_length=50, window_example=10, definition_mode='definition'):
         self.nb_epochs = nb_epochs
         self.batch_size = batch_size
         self.hidden_layer_size = hidden_layer_size
@@ -44,26 +44,27 @@ if __name__ == '__main__':
     if torch.cuda.is_available():
         DEVICE = torch.device("cuda:" + args.device_id)
 
-    supersense_dist = {supersense : 0 for supersense in SUPERSENSES}
-    supersense_correct = {supersense : 0 for supersense in SUPERSENSES}
+
 
     # Classification program
-    with open("logs_5.txt", 'w', encoding="utf-8") as file:
-        for split_id in range(1, 2):
-            for def_mode in ['definition_with_lemma_and_labels']:
-                for lr in [0.0005]:
+    with open("new_log_file_1.txt", 'w', encoding="utf-8") as file:
+        for i in range(3):
+            for def_mode in ['definition_with_lemma']:
+                #, 'definition_with_lemma', 'definition_with_labels', 'definition_with_lemma_and_labels']:
+                for lr in [0.0001]:
                     for patience in [5]:
                         # Encoding the examples from the datasets
                         train_examples, dev_examples, test_examples = clf.encoded_examples_split(DEVICE,
                                                                                                  def_mode=def_mode,
-                                                                                                 train=f"{split_id}_train.pkl",
-                                                                                                 dev=f"{split_id}_dev.pkl",
-                                                                                                 test=f"{split_id}_test.pkl",
-                                                                                                 id2data=f"{split_id}_id2data.pkl",
+                                                                                                 train=f"train.pkl",
+                                                                                                 dev=f"dev.pkl",
+                                                                                                 test=f"test.pkl",
+                                                                                                 id2data=f"id2data.pkl",
                                                                                                  )
-
+                        supersense_dist = {supersense: 0 for supersense in SUPERSENSES}
+                        supersense_correct = {supersense: 0 for supersense in SUPERSENSES}
                         params = Parameters(lr=lr, definition_mode=def_mode, patience=patience)
-                        file.write(f"split_id:{split_id};")
+                        file.write(f"run:{i+1};")
                         classifier = clf.SupersenseTagger(params, DEVICE)
                         clf.training(params, train_examples, dev_examples, classifier, DEVICE, file)
                         clf.evaluation(dev_examples, classifier, DEVICE, file, supersense_dist, supersense_correct)

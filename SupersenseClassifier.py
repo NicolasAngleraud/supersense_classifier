@@ -30,23 +30,15 @@ NB_EPOCHS = 10
 BATCH_SIZE = 2
 
 
-def encoded_examples_split(DEVICE, def_mode='definition', train="1_train.pkl", dev="1_dev.pkl", test="1_test.pkl",
+def encoded_examples_split(DEVICE, def_mode='definition', train="train.pkl", dev="dev.pkl", test="test.pkl",
                            id2data="1_id2data.pkl"):
     # loads the structures necessary to build examples sets
     with open(train, "rb") as file:
-        train_ids = pickle.load(file)
+        train_examples = pickle.load(file)
     with open(dev, "rb") as file:
-        dev_ids = pickle.load(file)
+        dev_examples = pickle.load(file)
     with open(test, "rb") as file:
-        test_ids = pickle.load(file)
-    with open(id2data, "rb") as file:
-        id2data_dict = pickle.load(file)
-
-
-    # build examples sets
-    train_examples = [id2data_dict[id] for id in train_ids]
-    dev_examples = [id2data_dict[id] for id in dev_ids]
-    test_examples = [id2data_dict[id] for id in test_ids]
+        test_examples = pickle.load(file)
 
     # encodes the examples of each set
     encoded_train_examples = []
@@ -55,20 +47,20 @@ def encoded_examples_split(DEVICE, def_mode='definition', train="1_train.pkl", d
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
     for example in train_examples:
-        definition = example[def_mode][0]
-        supersense = example[def_mode][1]
+        definition = example[def_mode]
+        supersense = example["supersense"]
         definition_encoding = tokenizer.encode(text=definition, add_special_tokens=True)
         supersense_encoding = supersense2i[supersense]
         encoded_train_examples.append((definition_encoding, supersense_encoding))
     for example in dev_examples:
-        definition = example[def_mode][0]
-        supersense = example[def_mode][1]
+        definition = example[def_mode]
+        supersense = example["supersense"]
         definition_encoding = tokenizer.encode(text=definition, add_special_tokens=True)
         supersense_encoding = supersense2i[supersense]
         encoded_dev_examples.append((definition_encoding, supersense_encoding))
     for example in test_examples:
-        definition = example[def_mode][0]
-        supersense = example[def_mode][1]
+        definition = example[def_mode]
+        supersense = example["supersense"]
         definition_encoding = tokenizer.encode(text=definition, add_special_tokens=True)
         supersense_encoding = supersense2i[supersense]
         encoded_test_examples.append((definition_encoding, supersense_encoding))
