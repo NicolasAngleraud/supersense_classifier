@@ -141,10 +141,14 @@ class SupersenseTagger(nn.Module):
         correct_indices = torch.nonzero(Y_pred != Y_gold).squeeze().to(DEVICE)
 
         # Get the predicted and gold classes for the errors
-        errors = [(SUPERSENSES[Y_pred[i].item()], SUPERSENSES[Y_gold[i].item()]) for i in error_indices]
+        if torch.numel(error_indices) > 0:
+            errors = [(SUPERSENSES[Y_pred[i].item()], SUPERSENSES[Y_gold[i].item()]) for i in error_indices]
+        else:
+            errors = []
 
-        for i in correct_indices:
-            supersense_correct[SUPERSENSES[Y_gold[i].item()]] += 1
+        if torch.numel(correct_indices) > 0:
+            for i in correct_indices:
+                supersense_correct[SUPERSENSES[Y_gold[i].item()]] += 1
 
         for j in range(len(examples_batch_encodings)):
             supersense_dist[SUPERSENSES[Y_gold[j].item()]] += 1
